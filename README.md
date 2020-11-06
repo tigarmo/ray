@@ -1,0 +1,1 @@
+![Rust](https://github.com/tigarmo/ray/workflows/Rust/badge.svg?branch=main)
