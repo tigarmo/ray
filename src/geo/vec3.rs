@@ -1,6 +1,6 @@
 use std::ops;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -10,6 +10,14 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 { x: x, y: y, z: z }
+    }
+
+    pub fn clamped(self) -> Vec3 {
+        Vec3::new(
+            self.x.clamp(0.0, 1.0),
+            self.y.clamp(0.0, 1.0),
+            self.z.clamp(0.0, 1.0),
+        )
     }
 }
 
@@ -107,5 +115,15 @@ mod tests {
         let mut p3 = p2;
         p3 *= 3.0;
         assert_eq!(p3, (-3.0, -6.0, -9.0));
+    }
+
+    #[test]
+    fn test_clamp() {
+        let (p1, p2) = setup();
+        assert_eq!(p1.clamped(), (1.0, 1.0, 1.0));
+        assert_eq!(p2.clamped(), (0.0, 0.0, 0.0));
+
+        let p3 = Vec3::new(-1.0, 2.0, 0.5);
+        assert_eq!(p3.clamped(), (0.0, 1.0, 0.5));
     }
 }
