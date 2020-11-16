@@ -1,5 +1,9 @@
 #![feature(clamp)]
 
+extern crate slice_of_array;
+
+use ::slice_of_array::prelude::*;
+
 mod geo;
 
 use geo::vec3::Vec3;
@@ -13,18 +17,11 @@ fn pixel(v: &Vec3) -> [u8; 3] {
 }
 
 fn main() {
-    let p = Vec3 {
-        x: 1.0,
-        y: 2.0,
-        z: 3.0,
-    };
-    println!("{:?}", p);
-    println!("{}", p == p);
-
     let width = 1024;
     let height = 768;
     let num_pixels = width * height;
     let mut framebuffer: Vec<Vec3> = vec![Default::default(); num_pixels];
+    let mut pixels: Vec<[u8; 3]> = vec![[255, 0, 255]; num_pixels];
 
     for j in 0..height {
         for i in 0..width {
@@ -36,6 +33,10 @@ fn main() {
         }
     }
 
+    for (v, p) in framebuffer.iter().zip(pixels.iter_mut()) {
+        *p = pixel(v);
+    }
+
     let path = Path::new("F:/image.ppm");
     let display = path.display();
     let mut file = match File::create(&path) {
@@ -45,9 +46,5 @@ fn main() {
 
     let header = format!("P6\n{} {}\n255\n", width, height);
     file.write_all(header.as_bytes()).unwrap();
-
-    for v in &framebuffer {
-        let p = pixel(v);
-        file.write_all(&p).unwrap();
-    }
+    file.write_all(pixels.flat()).unwrap();
 }

@@ -3,3 +3,12 @@
 [[package]]
 name = "ray"
 version = "0.1.0"
+dependencies = [
+ "slice-of-array",
+]
+
+[[package]]
+name = "slice-of-array"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fffe93cb1051a724788529b504be2a1016498582545e50d76de4ffca1906367"
