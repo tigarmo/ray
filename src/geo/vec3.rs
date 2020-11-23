@@ -12,12 +12,33 @@ impl Vec3 {
         Vec3 { x: x, y: y, z: z }
     }
 
+    pub fn origin() -> Vec3 {
+        Vec3::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn length(self) -> f64 {
+        self.dot(self).sqrt()
+    }
+
+    pub fn normalized(self) -> Vec3 {
+        let length = self.length();
+        if length == 0.0 {
+            Vec3::origin()
+        } else {
+            self / length
+        }
+    }
+
     pub fn clamped(self) -> Vec3 {
         Vec3::new(
             self.x.clamp(0.0, 1.0),
             self.y.clamp(0.0, 1.0),
             self.z.clamp(0.0, 1.0),
         )
+    }
+
+    pub fn dot(self, other: Vec3) -> f64 {
+        (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
 }
 
@@ -81,6 +102,23 @@ impl ops::MulAssign<f64> for Vec3 {
     }
 }
 
+impl ops::Div<f64> for Vec3 {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Vec3 {
+        let mut p = self;
+        p /= rhs;
+        p
+    }
+}
+
+impl ops::DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, rhs: f64) {
+        self.x /= rhs;
+        self.y /= rhs;
+        self.z /= rhs;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Vec3;
@@ -118,6 +156,17 @@ mod tests {
     }
 
     #[test]
+    fn test_div() {
+        let (p1, p2) = setup();
+        assert_eq!(p1 / 2.0, (0.5, 1.0, 1.5));
+        assert_eq!(p2 / 2.0, (-0.5, -1.0, -1.5));
+
+        let mut p3 = p1 * 10.0;
+        p3 /= 2.0;
+        assert_eq!(p3, (5.0, 10.0, 15.0));
+    }
+
+    #[test]
     fn test_clamp() {
         let (p1, p2) = setup();
         assert_eq!(p1.clamped(), (1.0, 1.0, 1.0));
@@ -125,5 +174,29 @@ mod tests {
 
         let p3 = Vec3::new(-1.0, 2.0, 0.5);
         assert_eq!(p3.clamped(), (0.0, 1.0, 0.5));
+    }
+
+    #[test]
+    fn test_dot() {
+        let (p1, p2) = setup();
+        assert_eq!(p1.dot(p1), 14.0);
+        assert_eq!(p2.dot(p2), 14.0);
+        assert_eq!(p1.dot(p2), -14.0);
+    }
+
+    #[test]
+    fn test_length() {
+        let (p1, p2) = setup();
+        assert_eq!(p1.length(), 14.0_f64.sqrt());
+        assert_eq!(p2.length(), 14.0_f64.sqrt());
+
+        assert_eq!(Vec3::origin().length(), 0.0);
+    }
+
+    #[test]
+    fn test_normalized() {
+        assert_eq!(Vec3::origin().normalized(), (0.0, 0.0, 0.0));
+        assert_eq!(Vec3::new(2.0, 0.0, 0.0).normalized(), (1.0, 0.0, 0.0));
+        assert_eq!(Vec3::new(-2.0, 0.0, 0.0).normalized(), (-1.0, 0.0, 0.0));
     }
 }
