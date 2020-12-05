@@ -12,15 +12,15 @@ impl Sphere {
 
     pub fn ray_intersect(&self, orig: Vec3, dir: Vec3) -> Option<f64> {
         let center = self.center;
-        let radius = self.radius;
+        let radius2 = self.radius * self.radius;
 
-        let L = center - orig;
-        let tca = L.dot(dir);
-        let d2 = L.dot(L) - tca * tca;
-        if d2 > self.radius * self.radius {
+        let l = center - orig;
+        let tca = l.dot(dir);
+        let d2 = l.dot(l) - tca * tca;
+        if d2 > radius2 {
             return None;
         }
-        let thc = (radius * radius - d2).sqrt();
+        let thc = (radius2 - d2).sqrt();
         let t0 = tca - thc;
         let t1 = tca + thc;
         if t0 < 0.0 {
