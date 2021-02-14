@@ -1,13 +1,48 @@
 use super::vec3::Vec3;
 
+pub struct Material {
+    pub diffuse: Vec3,
+}
+
+impl Material {
+    pub const IVORY: Material = Material {
+        diffuse: Vec3 {
+            x: 0.4,
+            y: 0.4,
+            z: 0.3,
+        },
+    };
+
+    pub const RED_RUBBER: Material = Material {
+        diffuse: Vec3 {
+            x: 0.3,
+            y: 0.1,
+            z: 0.1,
+        },
+    };
+
+    pub const INDIGO: Material = Material {
+        diffuse: Vec3 {
+            x: 75.0 / 255.0,
+            y: 0.0,
+            z: 130.0 / 255.0,
+        },
+    };
+}
+
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
+    pub material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64) -> Sphere {
-        Sphere { center, radius }
+    pub fn new(center: Vec3, radius: f64, material: Material) -> Sphere {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 
     pub fn ray_intersect(&self, orig: Vec3, dir: Vec3) -> Option<f64> {
@@ -39,7 +74,7 @@ mod tests {
     #[test]
     fn test_ray_intersect() {
         let origin = Vec3::origin();
-        let sphere = Sphere::new(origin, 1.0);
+        let sphere = Sphere::new(origin, 1.0, Material::INDIGO);
         let dir = Vec3::new(0.0, 0.0, -1.0);
 
         assert_eq!(sphere.ray_intersect(Vec3::new(-2.0, 0.0, 1.0), dir), None);
