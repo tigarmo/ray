@@ -1,9 +1,8 @@
-#![feature(clamp)]
-
 extern crate slice_of_array;
 
 use ::slice_of_array::prelude::*;
 use std::process::Command;
+use std::time::Instant;
 
 mod geo;
 
@@ -51,7 +50,12 @@ fn main() {
     let mut framebuffer: Vec<Vec3> = vec![Default::default(); NUM_PIXELS];
     let mut pixels: Vec<[u8; 3]> = vec![[255, 0, 255]; NUM_PIXELS];
 
+    let start = Instant::now();
     raytrace(&mut framebuffer);
+    let duration = start.elapsed();
+
+    println!("Time elapsed in raytrace() is: {:?}", duration);
+
     for (v, p) in framebuffer.iter().zip(pixels.iter_mut()) {
         *p = pixel(v);
     }

@@ -23,14 +23,11 @@ impl Sphere {
         let thc = (radius2 - d2).sqrt();
         let t0 = tca - thc;
         let t1 = tca + thc;
-        if t0 < 0.0 {
-            if t1 < 0.0 {
-                None
-            } else {
-                Some(t1)
-            }
-        } else {
-            Some(t0)
+
+        match (t0, t1) {
+            (t0, t1) if t0 < 0.0 && t1 < 0.0 => None,
+            (t0, t1) if t0 < 0.0 => Some(t1),
+            (t0, _) => Some(t0),
         }
     }
 }
