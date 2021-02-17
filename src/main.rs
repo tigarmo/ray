@@ -5,10 +5,12 @@ use std::time::Instant;
 use std::{process::Command, vec};
 
 mod geo;
+mod mat;
 
-use geo::sphere::Material;
 use geo::sphere::Sphere;
 use geo::vec3::Vec3;
+use mat::light::Light;
+use mat::material::Material;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -22,28 +24,52 @@ fn pixel(v: &Vec3) -> [u8; 3] {
     [p.x as u8, p.y as u8, p.z as u8]
 }
 
-fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>) -> Vec3 {
-    let mut diffuse = Vec3::new(0.2, 0.7, 0.8);
+struct Hit<'a> {
+    point: Vec3,
+    normal: Vec3,
+    material: &'a Material,
+}
+
+fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> Vec3 {
     let mut min_dist = f64::MAX;
+    let mut hit: Option<Hit> = None;
+
     for sphere in scene {
         match sphere.ray_intersect(orig, dir) {
             Some(sphere_dist) if sphere_dist < min_dist => {
                 min_dist = sphere_dist;
-                diffuse = sphere.material.diffuse
+                let point = orig + dir * sphere_dist;
+                let normal = (point - sphere.center).normalized();
+                hit = Some(Hit {
+                    point,
+                    normal,
+                    material: &sphere.material,
+                })
             }
             _ => (),
         }
     }
 
-    diffuse
+    match hit {
+        Some(hit) => {
+            let mut diffuse_intensity = 0.0;
+            for light in lights {
+                let light_dir = (light.position - hit.point).normalized();
+                diffuse_intensity += light.intensity * f64::max(0.0, light_dir.dot(hit.normal));
+            }
+            hit.material.diffuse * diffuse_intensity
+        }
+        None => Vec3::new(0.2, 0.7, 0.8),
+    }
 }
 
 fn raytrace(framebuffer: &mut Vec<Vec3>) {
     let scene = vec![
-        Sphere::new(Vec3::new(-2.0, 0.0, -16.0), 2.0, Material::IVORY),
-        Sphere::new(Vec3::new(1.0, 0.0, -20.0), 2.0, Material::RED_RUBBER),
-        Sphere::new(Vec3::new(0.0, 3.0, -10.0), 1.0, Material::INDIGO),
+        Sphere::new(Vec3::new(-2.0, 0.0, -14.0), 2.0, Material::IVORY),
+        Sphere::new(Vec3::new(1.0, 0.0, -18.0), 2.0, Material::RED_RUBBER),
+        Sphere::new(Vec3::new(0.0, 3.0, -8.0), 1.0, Material::INDIGO),
     ];
+    let lights = vec![Light::new(Vec3::new(-20.0, 20.0, 20.0), 1.5)];
     let fov = 60.0_f64.to_radians();
     let tan_fov = (fov / 2.0).tan();
     let fwidth = WIDTH as f64;
@@ -54,7 +80,7 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
             let x = (2.0 * (i as f64 + 0.5) / fwidth - 1.0) * tan_fov * fwidth / fheight;
             let y = -(2.0 * (j as f64 + 0.5) / fheight - 1.0) * tan_fov;
             let dir = Vec3::new(x, y, -1.0).normalized();
-            framebuffer[i + j * WIDTH] = cast_ray(Vec3::origin(), dir, &scene);
+            framebuffer[i + j * WIDTH] = cast_ray(Vec3::origin(), dir, &scene, &lights);
         }
     }
 }
