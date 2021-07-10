@@ -32,7 +32,7 @@ struct Hit<'a> {
     material: &'a Material,
 }
 
-fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> Vec3 {
+fn scene_intersect<'a>(orig: Vec3, dir: Vec3, scene: &'a Vec<Sphere>) -> Option<Hit<'a>> {
     let mut min_dist = f64::MAX;
     let mut hit: Option<Hit> = None;
 
@@ -51,22 +51,42 @@ fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> 
             _ => (),
         }
     }
+    hit
+}
 
+fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> Vec3 {
+    let hit = scene_intersect(orig, dir, scene);
     match hit {
         Some(hit) => {
             let mut diffuse_intensity = 0.0;
             let mut specular_intensity = 0.0;
             let normal = hit.normal;
             let material = hit.material;
+            let point = hit.point;
             for light in lights {
-                let light_dir = (light.position - hit.point).normalized();
+                let light_dir = (light.position - point).normalized();
+                let light_dist = (light.position - point).length();
+
+                let shadow_orig = if light_dir.dot(normal) < 0.0 {
+                    point - normal * 0.001
+                } else {
+                    point + normal * 0.001
+                };
+                if let Some(hit2) = scene_intersect(shadow_orig, light_dir, scene) {
+                    if (hit2.point - shadow_orig).length() < light_dist {
+                        continue;
+                    }
+                }
+
                 diffuse_intensity += light.intensity * f64::max(0.0, light_dir.dot(normal));
                 specular_intensity += f64::powf(
                     f64::max(0.0, light_dir.reflect(normal).dot(dir)),
                     material.specular_exponent,
                 ) * light.intensity;
             }
-            material.diffuse * diffuse_intensity * material.albedo.x
+            let ambient = Vec3::new(0.1, 0.1, 0.1);
+            ambient * 0.025
+                + material.diffuse * diffuse_intensity * material.albedo.x
                 + Vec3::new(1.0, 1.0, 1.0) * specular_intensity * material.albedo.y
         }
         None => Vec3::new(0.2, 0.7, 0.8),
@@ -74,15 +94,9 @@ fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> 
 }
 
 fn raytrace(framebuffer: &mut Vec<Vec3>) {
-    // let scene = vec![
-    //     Sphere::new(Vec3::new(-2.0, 0.0, -14.0), 2.0, Material::IVORY),
-    //     Sphere::new(Vec3::new(1.0, 0.0, -18.0), 2.0, Material::RED_RUBBER),
-    //     Sphere::new(Vec3::new(0.0, 3.0, -8.0), 1.0, Material::INDIGO),
-    // ];
-    // let lights = vec![Light::new(Vec3::new(-20.0, 20.0, 20.0), 1.5)];
-    let world_z = -25.0;
+    let world_z = -30.0;
     let mut scene = vec![];
-    for depth in 0..4 {
+    for depth in 0..1 {
         for i in 0..12 {
             let angle = 30.0_f64.to_radians() * i as f64;
             let material = match (i + depth) % 2 {
@@ -92,17 +106,22 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
             let z = world_z - (depth as f64 * 10.0);
             let center = Vec3::new(4.0 * angle.cos(), 4.0 * angle.sin(), z);
             scene.push(Sphere::new(center, 1.0, material));
+            scene.push(Sphere::new(
+                Vec3::new(center.x * 0.7, center.y * 0.7, z),
+                0.25,
+                material,
+            ));
         }
     }
-    scene.push(Sphere::new(
-        Vec3::new(-1.0, 1.0, world_z),
-        1.0,
-        Material::IVORY,
-    ));
+    // scene.push(Sphere::new(
+    //     Vec3::new(-1.0, 1.0, world_z),
+    //     1.0,
+    //     Material::IVORY,
+    // ));
 
     let lights = vec![
-        Light::new(Vec3::new(0.0, 0.0, -22.0), 1.0),
-        //Light::new(Vec3::new(0.0, 40.0, -22.0), 0.5),
+        Light::new(Vec3::new(0.0, 0.0, world_z), 0.75),
+        Light::new(Vec3::new(0.0, 40.0, 0.0), 1.15),
     ];
     let fov = 20.0_f64.to_radians();
     let tan_fov = (fov / 2.0).tan();
