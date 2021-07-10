@@ -55,11 +55,19 @@ fn cast_ray(orig: Vec3, dir: Vec3, scene: &Vec<Sphere>, lights: &Vec<Light>) -> 
     match hit {
         Some(hit) => {
             let mut diffuse_intensity = 0.0;
+            let mut specular_intensity = 0.0;
+            let normal = hit.normal;
+            let material = hit.material;
             for light in lights {
                 let light_dir = (light.position - hit.point).normalized();
-                diffuse_intensity += light.intensity * f64::max(0.0, light_dir.dot(hit.normal));
+                diffuse_intensity += light.intensity * f64::max(0.0, light_dir.dot(normal));
+                specular_intensity += f64::powf(
+                    f64::max(0.0, light_dir.reflect(normal).dot(dir)),
+                    material.specular_exponent,
+                ) * light.intensity;
             }
-            hit.material.diffuse * diffuse_intensity
+            material.diffuse * diffuse_intensity * material.albedo.x
+                + Vec3::new(1.0, 1.0, 1.0) * specular_intensity * material.albedo.y
         }
         None => Vec3::new(0.2, 0.7, 0.8),
     }
@@ -94,7 +102,7 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
 
     let lights = vec![
         Light::new(Vec3::new(0.0, 0.0, -22.0), 1.0),
-        //Light::new(Vec3::new(0.0, 40.0, 0.0), 0.5),
+        //Light::new(Vec3::new(0.0, 40.0, -22.0), 0.5),
     ];
     let fov = 20.0_f64.to_radians();
     let tan_fov = (fov / 2.0).tan();

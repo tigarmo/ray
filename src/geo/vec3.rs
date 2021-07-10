@@ -41,6 +41,10 @@ impl Vec3 {
     pub fn dot(self, other: Vec3) -> f64 {
         (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
+
+    pub fn reflect(self, other: Vec3) -> Vec3 {
+        self - other * 2.0 * (self.dot(other))
+    }
 }
 
 // This one is just to simplify tests
