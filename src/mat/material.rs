@@ -1,5 +1,6 @@
 use crate::geo::vec3::Vec3;
 
+/// A material world
 #[derive(Clone, Copy)]
 pub struct Material {
     pub diffuse: Vec3,

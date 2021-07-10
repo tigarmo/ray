@@ -37,6 +37,7 @@ impl Vec3 {
         )
     }
 
+    /// Compute the dot product between this vector and `other`
     pub fn dot(self, other: Vec3) -> f64 {
         (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
