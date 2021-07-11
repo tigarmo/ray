@@ -4,16 +4,18 @@ use ::slice_of_array::prelude::*;
 use std::time::Instant;
 use std::{process::Command, vec};
 
-mod geo;
-mod mat;
+mod light;
+mod material;
+mod sphere;
+mod vec3;
 
-use geo::sphere::Sphere;
-use geo::vec3::Vec3;
-use mat::light::Light;
-use mat::material::Material;
+use light::Light;
+use material::Material;
+use sphere::Sphere;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use vec3::Vec3;
 
 static WIDTH: usize = 1024;
 static HEIGHT: usize = 768;
@@ -107,8 +109,8 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
             let center = Vec3::new(4.0 * angle.cos(), 4.0 * angle.sin(), z);
             scene.push(Sphere::new(center, 1.0, material));
             scene.push(Sphere::new(
-                Vec3::new(center.x * 0.7, center.y * 0.7, z),
-                0.25,
+                Vec3::new(center.x * 0.67, center.y * 0.67, z),
+                0.3,
                 material,
             ));
         }
@@ -136,12 +138,7 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
             let y = -(2.0 * (j as f64 + 0.5) / fheight - 1.0) * tan_fov;
             let dir = Vec3::new(x, y, -1.0).normalized();
             let color_value = cast_ray(Vec3::origin(), dir, &scene, &lights);
-            let gamma_corrected = Vec3::new(
-                color_value.x.powf(1.0 / GAMMA),
-                color_value.y.powf(1.0 / GAMMA),
-                color_value.z.powf(1.0 / GAMMA),
-            );
-            framebuffer[i + j * WIDTH] = gamma_corrected;
+            framebuffer[i + j * WIDTH] = color_value.pow(1.0 / GAMMA);
         }
     }
 

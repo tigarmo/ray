@@ -1,4 +1,4 @@
-use crate::geo::vec3::Vec3;
+use crate::vec3::Vec3;
 
 /// A material world
 #[derive(Clone, Copy)]

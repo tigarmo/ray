@@ -1,5 +1,5 @@
-use super::vec3::Vec3;
-use crate::mat::material::Material;
+use crate::material::Material;
+use crate::vec3::Vec3;
 
 pub struct Sphere {
     pub center: Vec3,

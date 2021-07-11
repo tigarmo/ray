@@ -1,4 +1,5 @@
-use crate::geo::vec3::Vec3;
+use crate::vec3::Vec3;
+
 pub struct Light {
     pub position: Vec3,
     pub intensity: f64,

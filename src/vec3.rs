@@ -45,6 +45,10 @@ impl Vec3 {
     pub fn reflect(self, other: Vec3) -> Vec3 {
         self - other * 2.0 * (self.dot(other))
     }
+
+    pub fn pow(self, exp: f64) -> Vec3 {
+        Vec3::new(self.x.powf(exp), self.y.powf(exp), self.z.powf(exp))
+    }
 }
 
 // This one is just to simplify tests
