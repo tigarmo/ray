@@ -134,7 +134,7 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
     let start = Instant::now();
 
     framebuffer
-        .into_iter()
+        .into_par_iter()
         .enumerate()
         .for_each(|(index, value)| {
             let j = index / WIDTH;
