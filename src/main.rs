@@ -11,14 +11,15 @@ mod vec3;
 
 use light::Light;
 use material::Material;
+use rayon::prelude::*;
 use sphere::Sphere;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use vec3::Vec3;
 
-static WIDTH: usize = 1024;
-static HEIGHT: usize = 768;
+static WIDTH: usize = 1024 * 1;
+static HEIGHT: usize = 768 * 1;
 static NUM_PIXELS: usize = WIDTH * HEIGHT;
 
 static GAMMA: f64 = 2.2;
@@ -132,15 +133,18 @@ fn raytrace(framebuffer: &mut Vec<Vec3>) {
 
     let start = Instant::now();
 
-    for j in 0..HEIGHT {
-        for i in 0..WIDTH {
+    framebuffer
+        .into_iter()
+        .enumerate()
+        .for_each(|(index, value)| {
+            let j = index / WIDTH;
+            let i = index % WIDTH;
             let x = (2.0 * (i as f64 + 0.5) / fwidth - 1.0) * tan_fov * fwidth / fheight;
             let y = -(2.0 * (j as f64 + 0.5) / fheight - 1.0) * tan_fov;
             let dir = Vec3::new(x, y, -1.0).normalized();
             let color_value = cast_ray(Vec3::origin(), dir, &scene, &lights);
-            framebuffer[i + j * WIDTH] = color_value.pow(1.0 / GAMMA);
-        }
-    }
+            *value = color_value.pow(1.0 / GAMMA);
+        });
 
     let duration = start.elapsed();
     println!(
@@ -167,7 +171,7 @@ fn main() {
             Ok(file) => file,
         };
 
-        let header = format!("P6\n{} {}\n255\n", WIDTH, HEIGHT);
+        let header = format!("P6\n{WIDTH} {HEIGHT}\n255\n");
         file.write_all(header.as_bytes()).unwrap();
         file.write_all(pixels.flat()).unwrap();
     }
